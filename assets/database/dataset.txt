@@ -1,0 +1,38 @@
+[
+  {
+    "question": "Quelle est la capitale de la France ?",
+    "options": ["Paris", "Londres", "Berlin", "Madrid"],
+    "correct": 0,
+    "points": 5
+  },
+  {
+    "question": "Combien font 7 x 8 ?",
+    "options": ["48", "54", "56", "64"],
+    "correct": 2,
+    "points": 5
+  },
+  {
+    "question": "Quel est le symbole chimique de l’eau ?",
+    "options": ["H2O", "O2", "CO2", "NaCl"],
+    "correct": 0,
+    "points": 5
+  },
+  {
+    "question": "Qui a écrit \"Les Misérables\" ?",
+    "options": ["Victor Hugo", "Balzac", "Molière", "Zola"],
+    "correct": 0,
+    "points": 5
+  },
+  {
+    "question": "Quelle planète est surnommée la planète rouge ?",
+    "options": ["Mars", "Jupiter", "Vénus", "Saturne"],
+    "correct": 0,
+    "points": 5
+  },
+  {
+    "question": "En quelle année l’homme a-t-il marché sur la Lune ?",
+    "options": ["1965", "1969", "1972", "1980"],
+    "correct": 1,
+    "points": 5
+  }
+]
