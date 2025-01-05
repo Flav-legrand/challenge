@@ -15,6 +15,8 @@ class Devoir {
 }
 
 class EvaluationPage extends StatefulWidget {
+  const EvaluationPage({super.key});
+
   @override
   _EvaluationPageState createState() => _EvaluationPageState();
 }
@@ -32,7 +34,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
     setState(() {
       _showAnimation = true;
     });
-    Timer(Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 3), () {
       setState(() {
         _showAnimation = false;
       });
@@ -54,7 +56,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
                 color: Colors.grey.withOpacity(0.1),
                 spreadRadius: 3,
                 blurRadius: 5,
-                offset: Offset(0, 3),
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -64,75 +66,76 @@ class _EvaluationPageState extends State<EvaluationPage> {
             children: [
               Text(
                 trimestre,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.blueAccent,
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Column(
                 children: devoirs
                     .map((devoir) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 7.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MatiereList(
-                            evaluationTitre: devoir.titre,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.all(12.0),
-                      child: Row(
-                        children: [
-                          Icon(
-                            devoir.icone,
-                            size: 24,
-                            color: Colors.blue[400],
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              devoir.titre,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.blue[800],
+                          padding: const EdgeInsets.symmetric(vertical: 7.0),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MatiereList(
+                                    evaluationTitre: devoir.titre,
+                                    trimestres: trimestre,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    devoir.icone,
+                                    size: 24,
+                                    color: Colors.blue[400],
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      devoir.titre,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.blue[800],
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      color: devoir.statut == Statut.reussi
+                                          ? Colors.green
+                                          : devoir.statut == Statut.echoue
+                                              ? Colors.red
+                                              : Colors.grey,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 16,
+                                    color: Colors.blue[400],
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: devoir.statut == Statut.reussi
-                                  ? Colors.green
-                                  : devoir.statut == Statut.echoue
-                                  ? Colors.red
-                                  : Colors.grey,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color: Colors.blue[400],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ))
+                        ))
                     .toList(),
               ),
             ],
@@ -145,7 +148,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
       appBar: AppBar(
         backgroundColor: Colors.blueAccent, // Harmonisé avec la page précédente
         elevation: 4,
-        title: Text(
+        title: const Text(
           'Evaluations',
           style: TextStyle(
             color: Colors.white,
@@ -157,83 +160,83 @@ class _EvaluationPageState extends State<EvaluationPage> {
         automaticallyImplyLeading: true, // Ajouter un bouton retour
       ),
       body: _showAnimation
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Bienvenue !",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.blueAccent,
-              ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Explorez vos évaluations et préparez-vous pour réussir !',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.blueGrey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20),
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation(Colors.blueAccent),
-            ),
-          ],
-        ),
-      )
-          : ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.school,
-                    color: Colors.blueAccent,
-                    size: 40,
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Préparez vos examens et suivez votre progression à chaque trimestre.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.blueAccent,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  Text(
+                    "Bienvenue !",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueAccent,
                     ),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Explorez vos évaluations et préparez-vous pour réussir !',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.blueGrey,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20),
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation(Colors.blueAccent),
                   ),
                 ],
               ),
+            )
+          : ListView(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.school,
+                          color: Colors.blueAccent,
+                          size: 40,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Préparez vos examens et suivez votre progression à chaque trimestre.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.blueAccent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                buildBlock("Trimestre I", [
+                  Devoir("Devoir nº1", Statut.reussi, Icons.edit),
+                  Devoir("Devoir nº2", Statut.echoue, Icons.school),
+                  Devoir("Examen trimestriel", Statut.aVenir, Icons.assignment),
+                ]),
+                buildBlock("Trimestre II", [
+                  Devoir("Devoir nº1", Statut.aVenir, Icons.edit),
+                  Devoir("Devoir nº2", Statut.reussi, Icons.school),
+                  Devoir("Examen trimestriel", Statut.aVenir, Icons.assignment),
+                ]),
+                buildBlock("Trimestre III", [
+                  Devoir("Devoir nº1", Statut.reussi, Icons.edit),
+                  Devoir("Devoir nº2", Statut.echoue, Icons.school),
+                  Devoir("Examen trimestriel", Statut.aVenir, Icons.assignment),
+                ]),
+              ],
             ),
-          ),
-          buildBlock("Trimestre I", [
-            Devoir("Devoir nº1", Statut.reussi, Icons.edit),
-            Devoir("Devoir nº2", Statut.echoue, Icons.school),
-            Devoir("Examen trimestriel", Statut.aVenir, Icons.assignment),
-          ]),
-          buildBlock("Trimestre II", [
-            Devoir("Devoir nº1", Statut.aVenir, Icons.edit),
-            Devoir("Devoir nº2", Statut.reussi, Icons.school),
-            Devoir("Examen trimestriel", Statut.aVenir, Icons.assignment),
-          ]),
-          buildBlock("Trimestre III", [
-            Devoir("Devoir nº1", Statut.reussi, Icons.edit),
-            Devoir("Devoir nº2", Statut.echoue, Icons.school),
-            Devoir("Examen trimestriel", Statut.aVenir, Icons.assignment),
-          ]),
-        ],
-      ),
       backgroundColor: Colors.grey[200],
     );
   }

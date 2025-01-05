@@ -4,8 +4,14 @@ import 'evaluation_contents.dart'; // Importer correctement les contenus d’év
 
 class EvaluationPage extends StatefulWidget {
   final Map<String, dynamic> matiere;
+  final String evaluationTitre;
+  final String trimestres;
 
-  const EvaluationPage({required this.matiere});
+  const EvaluationPage(
+      {super.key,
+      required this.matiere,
+      required this.evaluationTitre,
+      required this.trimestres});
 
   @override
   _EvaluationPageState createState() => _EvaluationPageState();
@@ -16,7 +22,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
   late Timer _timer;
   int _startTime = 0;
 
-  bool _isConfirmed = false; // État de la puce de confirmation
+  bool _isConfirmed = false;
 
   @override
   void initState() {
@@ -33,7 +39,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _startTime++;
         _timeString = _formatTime(_startTime);
@@ -60,13 +66,13 @@ class _EvaluationPageState extends State<EvaluationPage> {
           content: Text(content),
           actions: <Widget>[
             TextButton(
-              child: Text("Annuler"),
+              child: const Text("Annuler"),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text("Confirmer"),
+              child: const Text("Confirmer"),
               onPressed: () {
                 Navigator.of(context).pop();
                 onConfirm();
@@ -84,7 +90,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
       content: "Êtes-vous sûr de vouloir soumettre ce devoir ?",
       onConfirm: () {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Devoir soumis avec succès !")),
+          const SnackBar(content: Text("Devoir soumis avec succès !")),
         );
         Navigator.pushReplacementNamed(context, '/matiere_list'); // Redirection
       },
@@ -97,7 +103,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
       content: "Êtes-vous sûr de vouloir abandonner ce devoir ?",
       onConfirm: () {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Devoir abandonné.")),
+          const SnackBar(content: Text("Devoir abandonné.")),
         );
         Navigator.pushReplacementNamed(context, '/matiere_list'); // Redirection
       },
@@ -109,11 +115,12 @@ class _EvaluationPageState extends State<EvaluationPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Devoir ${widget.matiere['nom']}",
-          style: TextStyle(color: Colors.white),
+          "Devoir ${widget.matiere['nom']}.",
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
-        iconTheme: IconThemeData(color: Colors.white), // Bouton retour blanc
+        iconTheme:
+            const IconThemeData(color: Colors.white), // Bouton retour blanc
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -122,17 +129,19 @@ class _EvaluationPageState extends State<EvaluationPage> {
           EvaluationSection(
             title: "Partie I : Vérification des connaissances",
             points: 20,
-            content: EvaluationContents.getKnowledgeRetrievalContent(widget.matiere),
+            content: EvaluationContents.getKnowledgeRetrievalContent(
+                widget.matiere, widget.evaluationTitre, widget.trimestres),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Partie II : Application des connaissances
           EvaluationSection(
             title: "Partie II : Application des connaissances",
             points: 30,
-            content: EvaluationContents.getKnowledgeApplicationContent(widget.matiere),
+            content: EvaluationContents.getKnowledgeApplicationContent(
+                widget.matiere),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Partie III : Cas pratique
           EvaluationSection(
@@ -140,7 +149,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
             points: 50,
             content: EvaluationContents.getPracticalCaseContent(widget.matiere),
           ),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
 
           // Texte avec la puce de confirmation
           Column(
@@ -156,16 +165,16 @@ class _EvaluationPageState extends State<EvaluationPage> {
                       });
                     },
                   ),
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       "En soumettant ce devoir, j’accepte d’avoir lu, compris et approuvé les conditions d’utilisation d’Horizon Challenger. "
-                          "Je suis pleinement conscient des conséquences en cas de non-respect de ces conditions.",
+                      "Je suis pleinement conscient des conséquences en cas de non-respect de ces conditions.",
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Boutons "Soumettre" et "Abandonner"
               Row(
@@ -176,16 +185,17 @@ class _EvaluationPageState extends State<EvaluationPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       disabledBackgroundColor: Colors.grey,
-                      foregroundColor: _isConfirmed ? Colors.white : Colors.black,
+                      foregroundColor:
+                          _isConfirmed ? Colors.white : Colors.black,
                     ),
-                    child: Text("Soumettre"),
+                    child: const Text("Soumettre"),
                   ),
                   OutlinedButton(
                     onPressed: _handleAbandon,
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.blueAccent),
+                      side: const BorderSide(color: Colors.blueAccent),
                     ),
-                    child: Text(
+                    child: const Text(
                       "Abandonner",
                       style: TextStyle(color: Colors.blueAccent),
                     ),
@@ -207,22 +217,22 @@ class _EvaluationPageState extends State<EvaluationPage> {
               BoxShadow(
                 color: Colors.black.withOpacity(0.3),
                 blurRadius: 8,
-                offset: Offset(0, 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.access_time,
                 color: Colors.white,
                 size: 24,
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Text(
                 _timeString,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -242,6 +252,7 @@ class EvaluationSection extends StatelessWidget {
   final Widget content;
 
   const EvaluationSection({
+    super.key,
     required this.title,
     required this.points,
     required this.content,
@@ -264,15 +275,16 @@ class EvaluationSection extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blueAccent, // Modification de la couleur en bleu
+                      color: Colors
+                          .blueAccent, // Modification de la couleur en bleu
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Text(
                   "$points pts",
                   style: TextStyle(fontSize: 14, color: Colors.grey[600]),
