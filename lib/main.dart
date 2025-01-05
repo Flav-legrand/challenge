@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'view/screens/splash_screen.dart'; // Ajouter le chemin de splash_screen
-import 'view/theme/color.dart';
 
 void main() {
   runApp(MyApp());
