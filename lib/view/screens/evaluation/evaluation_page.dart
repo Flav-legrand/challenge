@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'evaluation_contents.dart'; // Importer correctement les contenus d’évaluation
+import 'package:challenger/controler/evaluation/evaluation.dart'; // Importer la classe Matiere
 
 class EvaluationPage extends StatefulWidget {
   final Map<String, dynamic> matiere;
   final String evaluationTitre;
   final String trimestres;
 
-  const EvaluationPage(
-      {super.key,
-      required this.matiere,
-      required this.evaluationTitre,
-      required this.trimestres});
+  const EvaluationPage({
+    super.key,
+    required this.matiere,
+    required this.evaluationTitre,
+    required this.trimestres,
+  });
 
   @override
   _EvaluationPageState createState() => _EvaluationPageState();
 }
 
+
+
 class _EvaluationPageState extends State<EvaluationPage> {
   late String _timeString;
   late Timer _timer;
   int _startTime = 0;
-
   bool _isConfirmed = false;
 
   @override
@@ -114,13 +117,15 @@ class _EvaluationPageState extends State<EvaluationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // Modification de cette ligne :
         title: Text(
-          "Devoir ${widget.matiere['nom']}.",
+          "Devoir ${widget.matiere['nom']}.", // Accès à la valeur 'nom' depuis le Map
           style: const TextStyle(color: Colors.white),
         ),
+
         backgroundColor: Colors.blueAccent,
         iconTheme:
-            const IconThemeData(color: Colors.white), // Bouton retour blanc
+        const IconThemeData(color: Colors.white), // Bouton retour blanc
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -168,7 +173,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
                   const Expanded(
                     child: Text(
                       "En soumettant ce devoir, j’accepte d’avoir lu, compris et approuvé les conditions d’utilisation d’Horizon Challenger. "
-                      "Je suis pleinement conscient des conséquences en cas de non-respect de ces conditions.",
+                          "Je suis pleinement conscient des conséquences en cas de non-respect de ces conditions.",
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
@@ -186,7 +191,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
                       backgroundColor: Colors.blueAccent,
                       disabledBackgroundColor: Colors.grey,
                       foregroundColor:
-                          _isConfirmed ? Colors.white : Colors.black,
+                      _isConfirmed ? Colors.white : Colors.black,
                     ),
                     child: const Text("Soumettre"),
                   ),

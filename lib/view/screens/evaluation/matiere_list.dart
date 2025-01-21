@@ -1,6 +1,6 @@
-import 'package:challenger/database/database.dart';
 import 'package:flutter/material.dart';
 import 'evaluation_page.dart';
+import 'package:challenger/controler/evaluation/evaluation.dart'; // Importer EvaluationController pour la BD
 
 class MatiereList extends StatefulWidget {
   final String evaluationTitre;
@@ -15,118 +15,107 @@ class MatiereList extends StatefulWidget {
 
 class _MatiereListState extends State<MatiereList> {
   List<Map<String, dynamic>> matieres = [];
+  List<Map<String, dynamic>> devoirs = [];
   List<Map<String, dynamic>> filteredMatieres = [];
+  List<Map<String, dynamic>> filteredDevoirs = [];
+  final EvaluationController _controller = EvaluationController();
 
   @override
   void initState() {
     super.initState();
-    // Appeler la méthode fetchMatieresByDevoirs avec les arguments appropriés
-    fetchMatieresByDevoirs(widget.trimestres, widget.evaluationTitre);
+    fetchMatieres();
   }
 
-  // Méthode pour récupérer les matières en fonction du trimestre et du titre
-  Future<void> fetchMatieresByDevoirs(String trimestre, String titre) async {
-    final db = await DatabaseHelper.getDatabase();
-
-    // Requête SQL pour récupérer les matières associées aux devoirs
-    final List<Map<String, dynamic>> result = await db.rawQuery('''
-      SELECT DISTINCT matieres.*
-      FROM matieres
-      INNER JOIN devoirs ON matieres.id = devoirs.matiere_id
-      WHERE devoirs.trimestre = ? AND devoirs.titre = ?
-    ''', [trimestre, titre]);
-
-    // Transformation des données récupérées
-    final fetchedMatieres = result.map((matiere) {
-      return {
-        'title': matiere['title'], // Assurez-vous que 'title' est le bon champ
-        'icon': _getIconFromName(matiere['icon']), // Transformation de l'icône
-        'color':
-            _getColorFromName(matiere['color']), // Transformation de la couleur
-        'nom': matiere['title'], // Nom de la matière
-        'performance':
-            '', // Vous pouvez ajouter des performances si disponibles
-        'statut': '', // Vous pouvez ajouter des statuts si disponibles
-      };
-    }).toList();
+  // Méthode pour récupérer les matières depuis la base de données
+  Future<void> fetchMatieres() async {
+    await _controller.initDatabase(); // Initialiser la base de données
+    final List <Matiere> fetchedMatieres =
+    await _controller.fetchAllMatieres(); // Récupérer les matières
 
     setState(() {
-      matieres =
-          fetchedMatieres; // Mise à jour de l'état avec les matières traitées
-      filteredMatieres = fetchedMatieres; // Initialisation de la liste filtrée
+      matieres = fetchedMatieres.map((matiere) {
+        return {
+          'id': matiere.id,
+          'title': matiere.title,
+          'icon': _getIconFromString(matiere.icon),
+          'color': _getColorFromName(matiere.color), // Utilisation des noms de couleurs
+          'performance': 'À venir', // Valeur par défaut
+          'statut': 'aVenir', // Valeur par défaut
+        };
+      }).toList();
+      filteredMatieres = matieres;
     });
   }
 
-  IconData _getIconFromName(String? iconName) {
+  Future<void> fetchDevoirs() async {
+    await _controller.initDatabase(); // Initialiser la base de données
+    final List <Devoir> fetchedDevoirs =
+    await _controller.fetchAllDevoirs(); // Récupérer les matières
+
+    setState(() {
+      devoirs = fetchedDevoirs.map((devoir) {
+        return {
+          'id': devoir.id,
+          'title': devoir.titre,
+          'statut': devoir.statut,
+        };
+      }).toList();
+      filteredMatieres = devoirs;
+    });
+  }
+
+
+  // Méthode pour convertir un nom d'icône en IconData
+  IconData _getIconFromString(String iconName) {
     switch (iconName) {
       case 'calculate':
         return Icons.calculate;
+      case 'grass':
+        return Icons.grass;
       case 'science':
         return Icons.science;
-      case 'biologie':
-        return Icons.grass;
-      case 'public':
-        return Icons.public;
-      case 'computer':
-        return Icons.computer;
-      case 'emoji_objects':
-        return Icons.emoji_objects;
-      case 'translate':
-        return Icons.translate;
-      case 'palette':
-        return Icons.palette;
       case 'book':
         return Icons.book;
-      case 'music_note':
-        return Icons.music_note;
-      case 'flask':
-        return Icons.science;
+      case 'map':
+        return Icons.map;
+      case 'psychology':
+        return Icons.psychology;
+      case 'language':
+        return Icons.language;
+      case 'language_outlined':
+        return Icons.language_outlined;
+      case 'computer':
+        return Icons.computer;
       case 'fitness_center':
         return Icons.fitness_center;
-      case 'account_balance':
-        return Icons.account_balance;
       default:
-        return Icons.help;
+        return Icons.help_outline; // Icône par défaut
     }
   }
 
-  Color _getColorFromName(String? colorName) {
-    switch (colorName?.toLowerCase()) {
+  // Méthode pour obtenir une couleur à partir d'un nom
+  Color _getColorFromName(String colorName) {
+    switch (colorName.toLowerCase()) {
       case 'blue':
         return Colors.blue;
-      case 'deepPurple':
-        return Colors.deepPurple;
-      case 'green':
-        return Colors.green;
-      case 'orange':
-        return Colors.orange;
       case 'red':
         return Colors.red;
-      case 'pink':
-        return Colors.pink;
+      case 'green':
+        return Colors.green;
       case 'yellow':
         return Colors.yellow;
-      case 'cyan':
-        return Colors.cyan;
-      case 'indigo':
-        return Colors.indigo;
-      case 'lime':
-        return Colors.lime;
-      case 'amber':
-        return Colors.amber;
-      case 'teal':
-        return Colors.teal;
-      case 'brown':
-        return Colors.brown;
-      case 'black':
-        return Colors.black;
-      case 'white':
-        return const Color.fromARGB(255, 194, 95, 95);
+      case 'purple':
+        return Colors.purple;
+      case 'deeppurple':
+        return Colors.deepPurple;
+      case 'orange':
+        return Colors.orange;
       case 'grey':
-      case 'gray':
-        return const Color.fromARGB(255, 69, 96, 187);
+        return Colors.grey;
+      case 'pink':
+        return Colors.pink;
       default:
-        return const Color.fromARGB(255, 14, 13, 13);
+        return Colors.grey; // Couleur par défaut si le nom est inconnu
     }
   }
 
@@ -170,7 +159,7 @@ class _MatiereListState extends State<MatiereList> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${widget.evaluationTitre} (${widget.trimestres})',
+          '${widget.evaluationTitre}',
           style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
@@ -259,6 +248,10 @@ class _MatiereListState extends State<MatiereList> {
                             "${getDuration(matiere["title"])} | ${getPerformanceText(matiere)}",
                             style: TextStyle(
                                 fontSize: 14, color: Colors.grey[700]),
+                          ),
+                          CircleAvatar(
+                            radius: 4,
+                            backgroundColor: getStatusColor(matiere['statut']),
                           ),
                         ],
                       ),
