@@ -108,5 +108,9 @@ class DatabaseHelper {
     return result;
   }
 
+  Future<List<Map<String, dynamic>>> getMatieres() async {
+    final db = await getDatabase();
+    return await db.query('matieres'); // Récupère toutes les matières
+  }
   // Autres méthodes d'insertion et de récupération des devoirs...
 }
