@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:challenger/database/database.dart';
-import 'package:challenger/view/screens/test/evaluation_contents.dart';
 
 class EvaluationContents {
   // Contenu pour la Partie I : Vérification des connaissances
