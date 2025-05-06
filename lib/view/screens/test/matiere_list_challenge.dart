@@ -4,21 +4,82 @@ import 'evaluation_page.dart'; // Importez la page EvaluationPage
 class MatiereListChallengePage extends StatelessWidget {
   final String communityName;
 
-  const MatiereListChallengePage({Key? key, required this.communityName}) : super(key: key);
+  const MatiereListChallengePage({Key? key, required this.communityName})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> matieres = [
-      {"nom": "SVT", "icone": Icons.biotech, "couleur": Colors.green, "statut": "reussi", "performance": 85},
-      {"nom": "Math", "icone": Icons.calculate, "couleur": Colors.orange, "statut": "echoue", "performance": 45},
-      {"nom": "Physique & Chimie", "icone": Icons.science, "couleur": Colors.blue, "statut": "aVenir", "performance": null},
-      {"nom": "Histoire Géo", "icone": Icons.map, "couleur": Colors.brown, "statut": "reussi", "performance": 78},
-      {"nom": "Philosophie", "icone": Icons.psychology, "couleur": Colors.purple, "statut": "aVenir", "performance": null},
-      {"nom": "Français", "icone": Icons.book, "couleur": Colors.indigo, "statut": "echoue", "performance": 50},
-      {"nom": "Espagnol", "icone": Icons.language, "couleur": Colors.redAccent, "statut": "reussi", "performance": 90},
-      {"nom": "Informatique", "icone": Icons.computer, "couleur": Colors.teal, "statut": "reussi", "performance": 95},
-      {"nom": "Education Physique", "icone": Icons.fitness_center, "couleur": Colors.deepOrange, "statut": "reussi", "performance": 88},
-      {"nom": "Culture Générale", "icone": Icons.public, "couleur": Colors.cyan, "statut": "aVenir", "performance": null},
+      {
+        "nom": "SVT",
+        "icone": Icons.biotech,
+        "couleur": Colors.green,
+        "statut": "reussi",
+        "performance": 85
+      },
+      {
+        "nom": "Math",
+        "icone": Icons.calculate,
+        "couleur": Colors.orange,
+        "statut": "echoue",
+        "performance": 45
+      },
+      {
+        "nom": "Physique & Chimie",
+        "icone": Icons.science,
+        "couleur": Colors.blue,
+        "statut": "aVenir",
+        "performance": null
+      },
+      {
+        "nom": "Histoire Géo",
+        "icone": Icons.map,
+        "couleur": Colors.brown,
+        "statut": "reussi",
+        "performance": 78
+      },
+      {
+        "nom": "Philosophie",
+        "icone": Icons.psychology,
+        "couleur": Colors.purple,
+        "statut": "aVenir",
+        "performance": null
+      },
+      {
+        "nom": "Français",
+        "icone": Icons.book,
+        "couleur": Colors.indigo,
+        "statut": "echoue",
+        "performance": 50
+      },
+      {
+        "nom": "Espagnol",
+        "icone": Icons.language,
+        "couleur": Colors.redAccent,
+        "statut": "reussi",
+        "performance": 90
+      },
+      {
+        "nom": "Informatique",
+        "icone": Icons.computer,
+        "couleur": Colors.teal,
+        "statut": "reussi",
+        "performance": 95
+      },
+      {
+        "nom": "Education Physique",
+        "icone": Icons.fitness_center,
+        "couleur": Colors.deepOrange,
+        "statut": "reussi",
+        "performance": 88
+      },
+      {
+        "nom": "Culture Générale",
+        "icone": Icons.public,
+        "couleur": Colors.cyan,
+        "statut": "aVenir",
+        "performance": null
+      },
     ];
 
     Color getStatusColor(String statut) {
@@ -40,7 +101,9 @@ class MatiereListChallengePage extends StatelessWidget {
     }
 
     String getPerformanceText(Map<String, dynamic> matiere) {
-      return matiere["performance"] != null ? "${matiere["performance"]}%" : "À venir";
+      return matiere["performance"] != null
+          ? "${matiere["performance"]}%"
+          : "À venir";
     }
 
     return Scaffold(
@@ -50,7 +113,8 @@ class MatiereListChallengePage extends StatelessWidget {
           style: const TextStyle(color: Colors.white), // Titre en blanc
         ),
         backgroundColor: Colors.blueAccent,
-        iconTheme: const IconThemeData(color: Colors.white), // Bouton retour en blanc
+        iconTheme:
+            const IconThemeData(color: Colors.white), // Bouton retour en blanc
       ),
       body: Column(
         children: [
@@ -103,7 +167,8 @@ class MatiereListChallengePage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => EvaluationPage(matiere: matiere),
+                          builder: (context) =>
+                              EvaluationPage(matiere: matiere),
                         ),
                       );
                     },
@@ -122,15 +187,18 @@ class MatiereListChallengePage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Icon(matiere["icone"], size: 40, color: matiere["couleur"]),
+                          Icon(matiere["icone"],
+                              size: 40, color: matiere["couleur"]),
                           Text(
                             matiere["nom"],
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                           Text(
                             "${getDuration(matiere["nom"])} | ${getPerformanceText(matiere)}",
-                            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey[700]),
                           ),
                           Container(
                             width: 12,

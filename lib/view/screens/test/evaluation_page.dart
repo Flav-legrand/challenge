@@ -5,7 +5,10 @@ import 'evaluation_contents.dart'; // Importer correctement les contenus d’év
 class EvaluationPage extends StatefulWidget {
   final Map<String, dynamic> matiere;
 
-  const EvaluationPage({required this.matiere});
+  const EvaluationPage({
+    super.key,
+    required this.matiere,
+  });
 
   @override
   _EvaluationPageState createState() => _EvaluationPageState();
@@ -81,10 +84,10 @@ class _EvaluationPageState extends State<EvaluationPage> {
   void _handleSubmit() async {
     await _showConfirmationDialog(
       title: "Confirmer la soumission",
-      content: "Êtes-vous sûr de vouloir soumettre ce devoir ?",
+      content: "Êtes-vous sûr de vouloir soumettre ce Test ?",
       onConfirm: () {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Devoir soumis avec succès !")),
+          SnackBar(content: Text("Test soumis avec succès !")),
         );
         Navigator.pushReplacementNamed(context, '/matiere_list'); // Redirection
       },
@@ -94,10 +97,10 @@ class _EvaluationPageState extends State<EvaluationPage> {
   void _handleAbandon() async {
     await _showConfirmationDialog(
       title: "Confirmer l'abandon",
-      content: "Êtes-vous sûr de vouloir abandonner ce devoir ?",
+      content: "Êtes-vous sûr de vouloir abandonner ce Test ?",
       onConfirm: () {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Devoir abandonné.")),
+          SnackBar(content: Text("Test abandonné.")),
         );
         Navigator.pushReplacementNamed(context, '/matiere_list'); // Redirection
       },
@@ -109,7 +112,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Devoir ${widget.matiere['nom']}",
+          "Test de ${widget.matiere['title']}",
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
@@ -122,26 +125,10 @@ class _EvaluationPageState extends State<EvaluationPage> {
           EvaluationSection(
             title: "Partie I : Vérification des connaissances",
             points: 20,
-            content: EvaluationContents.getKnowledgeRetrievalContent(widget.matiere),
+            content:
+                EvaluationContents.getKnowledgeRetrievalContent(widget.matiere),
           ),
           SizedBox(height: 20),
-
-          // Partie II : Application des connaissances
-          EvaluationSection(
-            title: "Partie II : Application des connaissances",
-            points: 30,
-            content: EvaluationContents.getKnowledgeApplicationContent(widget.matiere),
-          ),
-          SizedBox(height: 20),
-
-          // Partie III : Cas pratique
-          EvaluationSection(
-            title: "Partie III : Cas pratique",
-            points: 50,
-            content: EvaluationContents.getPracticalCaseContent(widget.matiere),
-          ),
-          SizedBox(height: 30),
-
           // Texte avec la puce de confirmation
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,8 +145,8 @@ class _EvaluationPageState extends State<EvaluationPage> {
                   ),
                   Expanded(
                     child: Text(
-                      "En soumettant ce devoir, j’accepte d’avoir lu, compris et approuvé les conditions d’utilisation d’Horizon Challenger. "
-                          "Je suis pleinement conscient des conséquences en cas de non-respect de ces conditions.",
+                      "En soumettant ce Test, j’accepte d’avoir lu, compris et approuvé les conditions d’utilisation d’Horizon Challenger. "
+                      "Je suis pleinement conscient des conséquences en cas de non-respect de ces conditions.",
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
@@ -176,7 +163,8 @@ class _EvaluationPageState extends State<EvaluationPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       disabledBackgroundColor: Colors.grey,
-                      foregroundColor: _isConfirmed ? Colors.white : Colors.black,
+                      foregroundColor:
+                          _isConfirmed ? Colors.white : Colors.black,
                     ),
                     child: Text("Soumettre"),
                   ),
@@ -267,7 +255,8 @@ class EvaluationSection extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blueAccent, // Modification de la couleur en bleu
+                      color: Colors
+                          .blueAccent, // Modification de la couleur en bleu
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),

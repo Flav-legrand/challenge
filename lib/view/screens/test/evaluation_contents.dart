@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:challenger/database/database.dart';
+import 'package:challenger/view/screens/test/evaluation_contents.dart';
 
 class EvaluationContents {
   // Contenu pour la Partie I : Vérification des connaissances
   static Widget getKnowledgeRetrievalContent(Map<String, dynamic> matiere) {
-    return KnowledgeVerificationContent(points: 20);
+    return KnowledgeVerificationContent(
+      points: 20,
+      matiereNom: matiere['title'],
+      evaluationTitre: '',
+      trimestres: '',
+    );
   }
 
   // Contenu pour la Partie II : Application des connaissances
@@ -18,72 +25,119 @@ class EvaluationContents {
 }
 
 // Contenu dynamique pour la Partie I : Vérification des connaissances
-class KnowledgeVerificationContent extends StatelessWidget {
+class KnowledgeVerificationContent extends StatefulWidget {
+  final String matiereNom;
+  final String evaluationTitre;
+  final String trimestres;
   final int points;
 
-  const KnowledgeVerificationContent({required this.points});
+  const KnowledgeVerificationContent({
+    required this.matiereNom,
+    required this.evaluationTitre,
+    required this.trimestres,
+    required this.points,
+  });
+
+  @override
+  _KnowledgeVerificationContentState createState() =>
+      _KnowledgeVerificationContentState();
+}
+
+class _KnowledgeVerificationContentState
+    extends State<KnowledgeVerificationContent> {
+  late Future<List<Map<String, dynamic>>> questionsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    questionsFuture = fetchQuestionsFromDatabase();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchQuestionsFromDatabase() async {
+    final db = await DatabaseHelper.getDatabase();
+    final List<Map<String, dynamic>> result = await db.rawQuery(
+      '''
+      SELECT 
+        m.title AS Matiere,
+        t.titre AS Test,
+        q.id AS QuestionId,
+        q.question AS Question,
+        q.points AS Points,
+        o.option_text AS OptionText,
+        o.is_correct AS IsCorrect
+      FROM 
+        matieres m
+      INNER JOIN 
+        tests t ON m.id = t.matiere_id
+      INNER JOIN 
+        test_questions q ON t.id = q.test_id
+      INNER JOIN 
+        test_options o ON q.id = o.question_id
+      WHERE 
+        m.title = ?;
+    ''',
+      [widget.matiereNom],
+    );
+
+    Map<int, Map<String, dynamic>> questionsMap = {};
+
+    for (var row in result) {
+      final questionId = row['QuestionId'] as int;
+
+      if (!questionsMap.containsKey(questionId)) {
+        questionsMap[questionId] = {
+          'id': questionId,
+          'matiere': row['Matiere'],
+          'test': row['Test'],
+          'question': row['Question'],
+          'options': [],
+        };
+      }
+
+      questionsMap[questionId]?['options'].add({
+        'optionText': row['OptionText'],
+        'isCorrect': row['IsCorrect'] == 1,
+      });
+    }
+
+    return questionsMap.values.toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> questions = [
-      {
-        "question": "Quelle est la capitale de la France ?",
-        "options": ["Paris", "Londres", "Berlin", "Madrid"],
-        "correctIndex": 0,
-        "points": 5,
-      },
-      {
-        "question": "Quelle est la plus grande planète du système solaire ?",
-        "options": ["Terre", "Mars", "Jupiter", "Saturne"],
-        "correctIndex": 2,
-        "points": 5,
-      },
-      {
-        "question": "Quelle est la capitale du Japon ?",
-        "options": ["Séoul", "Pékin", "Tokyo", "Bangkok"],
-        "correctIndex": 2,
-        "points": 5,
-      },
-      {
-        "question": "Combien y a-t-il de continents sur Terre ?",
-        "options": ["5", "6", "7", "8"],
-        "correctIndex": 2,
-        "points": 5,
-      },
-      {
-        "question": "Quel est l'élément chimique avec le symbole 'O' ?",
-        "options": ["Hydrogène", "Oxygène", "Carbone", "Azote"],
-        "correctIndex": 1,
-        "points": 5,
-      },
-      {
-        "question": "Quelle est la langue la plus parlée au monde ?",
-        "options": ["Anglais", "Chinois Mandarin", "Espagnol", "Hindî"],
-        "correctIndex": 1,
-        "points": 5,
-      },
-    ];
-
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Dans cet exercice, lisez les questions et trouvez la bonne réponse.",
-            style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-          ),
-          const SizedBox(height: 10),
-          Column(
-            children: List.generate(
-              questions.length,
-                  (index) => QuestionWithOptions(
-                question: questions[index],
-                index: index + 1,
-              ),
-            ),
-          ),
-        ],
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: questionsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Erreur : ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Aucune question disponible.'));
+          } else {
+            final questions = snapshot.data!;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Dans cet exercice, pour la matière ${widget.matiereNom}, évaluation '${widget.evaluationTitre}' - Trimestre ${widget.trimestres}, lisez les questions et trouvez la bonne réponse.",
+                  style: const TextStyle(
+                      fontSize: 16, fontStyle: FontStyle.italic),
+                ),
+                const SizedBox(height: 10),
+                ...questions.map((question) {
+                  final index = questions.indexOf(question) + 1;
+                  return QuestionWithOptions(
+                    question: question,
+                    index: index,
+                  );
+                }),
+              ],
+            );
+          }
+        },
       ),
     );
   }
@@ -131,28 +185,27 @@ class _QuestionWithOptionsState extends State<QuestionWithOptions> {
               child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
-                      // Annulation de la couleur de fond et du contour
                       color: isSelected ? Colors.blue[50] : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
-                      // Retrait de l'ombre portée
                       border: Border.all(
-                        color: isSelected ? Colors.blue : Colors.transparent, // Pas de bordure sauf si sélectionnée
+                        color: isSelected ? Colors.blue : Colors.transparent,
                         width: 1.5,
                       ),
                     ),
                     child: Row(
                       children: [
-                        // Re-ajout des puces à gauche avec la même couleur que le texte
                         Container(
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: isSelected ? Colors.blue : Colors.transparent,
+                            color:
+                                isSelected ? Colors.blue : Colors.transparent,
                             border: Border.all(
-                              color: isSelected ? Colors.blue : Colors.grey, // Couleur de la bordure des puces
+                              color: isSelected ? Colors.blue : Colors.grey,
                             ),
                           ),
                           child: isSelected
@@ -162,17 +215,16 @@ class _QuestionWithOptionsState extends State<QuestionWithOptions> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            option,
+                            option['optionText'],
                             style: TextStyle(
                               fontSize: 14,
-                              color: isSelected ? Colors.blue : Colors.black, // Couleur du texte
+                              color: isSelected ? Colors.blue : Colors.black,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Séparateur horizontal entre les options
                   Divider(color: Colors.grey[400], thickness: 1),
                 ],
               ),
@@ -190,25 +242,28 @@ class _QuestionWithOptionsState extends State<QuestionWithOptions> {
   }
 }
 
-// Partie II : Application des connaissances
 class KnowledgeApplicationContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> questions = [
       {
-        "question": "Expliquez comment vous pourriez résoudre un conflit en équipe.",
+        "question":
+            "Expliquez comment vous pourriez résoudre un conflit en équipe.",
         "points": 10,
       },
       {
-        "question": "Décrivez les étapes de la résolution d’un problème technique.",
+        "question":
+            "Décrivez les étapes de la résolution d’un problème technique.",
         "points": 10,
       },
       {
-        "question": "Proposez une méthode pour organiser efficacement une réunion.",
+        "question":
+            "Proposez une méthode pour organiser efficacement une réunion.",
         "points": 10,
       },
       {
-        "question": "Comment mesurer le succès d’un projet après sa livraison ?",
+        "question":
+            "Comment mesurer le succès d’un projet après sa livraison ?",
         "points": 10,
       },
     ];
@@ -226,7 +281,7 @@ class KnowledgeApplicationContent extends StatelessWidget {
           Column(
             children: List.generate(
               questions.length,
-                  (index) => ApplicationQuestionWithTextField(
+              (index) => ApplicationQuestionWithTextField(
                 question: questions[index],
                 index: index + 1,
               ),
@@ -267,15 +322,14 @@ class _ApplicationQuestionWithTextFieldState
           "${widget.index}. ${question["question"]}",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 10),
         TextField(
           controller: _controller,
-          maxLines: 5,
+          maxLines: 4,
           decoration: InputDecoration(
-            hintText: "Votre réponse ici...",
             border: OutlineInputBorder(),
+            hintText: 'Votre réponse ici...',
           ),
-          style: TextStyle(fontSize: 14),
         ),
         const SizedBox(height: 10),
         Text(
@@ -288,78 +342,28 @@ class _ApplicationQuestionWithTextFieldState
   }
 }
 
-// Partie III : Cas pratique
 class PracticalCaseContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic> caseStudy = {
-      "title": "Cas pratique : Résolution de conflit",
-      "description":
-      "Vous êtes responsable d’une équipe qui fait face à un conflit majeur. Identifiez les points bloquants, proposez des solutions, et élaborez un plan pour résoudre la situation.",
-      "points": 20,
-    };
-
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Dans cette section, vous devrez résoudre un cas pratique en proposant une solution détaillée.",
+            "Cas pratique à traiter dans cette section.",
             style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
           ),
           const SizedBox(height: 10),
-          CaseStudyQuestion(
-            caseStudy: caseStudy,
+          TextField(
+            maxLines: 10,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: 'Détails du cas pratique...',
+            ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class CaseStudyQuestion extends StatefulWidget {
-  final Map<String, dynamic> caseStudy;
-
-  const CaseStudyQuestion({required this.caseStudy});
-
-  @override
-  _CaseStudyQuestionState createState() => _CaseStudyQuestionState();
-}
-
-class _CaseStudyQuestionState extends State<CaseStudyQuestion> {
-  TextEditingController _controller = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    final caseStudy = widget.caseStudy;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          caseStudy["title"],
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          caseStudy["description"],
-          style: TextStyle(fontSize: 16),
-        ),
-        const SizedBox(height: 20),
-        TextField(
-          controller: _controller,
-          maxLines: 8,
-          decoration: InputDecoration(
-            hintText: "Proposez votre solution...",
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          "Points : ${caseStudy["points"]}",
-          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-        ),
-      ],
     );
   }
 }
