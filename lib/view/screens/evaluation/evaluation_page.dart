@@ -5,7 +5,10 @@ import 'evaluation_contents.dart'; // Importer correctement les contenus d’év
 class EvaluationPage extends StatefulWidget {
   final Map<String, dynamic> matiere;
 
-  const EvaluationPage({required this.matiere});
+  const EvaluationPage(
+      {required this.matiere,
+      required String evaluationTitre,
+      required String trimestres});
 
   @override
   _EvaluationPageState createState() => _EvaluationPageState();
@@ -122,7 +125,8 @@ class _EvaluationPageState extends State<EvaluationPage> {
           EvaluationSection(
             title: "Partie I : Vérification des connaissances",
             points: 20,
-            content: EvaluationContents.getKnowledgeRetrievalContent(widget.matiere),
+            content:
+                EvaluationContents.getKnowledgeRetrievalContent(widget.matiere),
           ),
           SizedBox(height: 20),
 
@@ -130,7 +134,8 @@ class _EvaluationPageState extends State<EvaluationPage> {
           EvaluationSection(
             title: "Partie II : Application des connaissances",
             points: 30,
-            content: EvaluationContents.getKnowledgeApplicationContent(widget.matiere),
+            content: EvaluationContents.getKnowledgeApplicationContent(
+                widget.matiere),
           ),
           SizedBox(height: 20),
 
@@ -159,7 +164,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
                   Expanded(
                     child: Text(
                       "En soumettant ce devoir, j’accepte d’avoir lu, compris et approuvé les conditions d’utilisation d’Horizon Challenger. "
-                          "Je suis pleinement conscient des conséquences en cas de non-respect de ces conditions.",
+                      "Je suis pleinement conscient des conséquences en cas de non-respect de ces conditions.",
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
@@ -176,7 +181,8 @@ class _EvaluationPageState extends State<EvaluationPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       disabledBackgroundColor: Colors.grey,
-                      foregroundColor: _isConfirmed ? Colors.white : Colors.black,
+                      foregroundColor:
+                          _isConfirmed ? Colors.white : Colors.black,
                     ),
                     child: Text("Soumettre"),
                   ),
@@ -267,7 +273,8 @@ class EvaluationSection extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blueAccent, // Modification de la couleur en bleu
+                      color: Colors
+                          .blueAccent, // Modification de la couleur en bleu
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
