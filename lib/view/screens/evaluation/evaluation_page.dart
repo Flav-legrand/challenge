@@ -4,11 +4,14 @@ import 'evaluation_contents.dart'; // Importer correctement les contenus d’év
 
 class EvaluationPage extends StatefulWidget {
   final Map<String, dynamic> matiere;
+  final String evaluationTitre; // Define evaluationTitre as a field
+  final String trimestres; // Define trimestres as a field
 
-  const EvaluationPage(
-      {required this.matiere,
-      required String evaluationTitre,
-      required String trimestres});
+  const EvaluationPage({
+    required this.matiere,
+    required this.evaluationTitre,
+    required this.trimestres,
+  });
 
   @override
   _EvaluationPageState createState() => _EvaluationPageState();
@@ -112,7 +115,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Devoir nº${widget.matiere['id']} de ${widget.matiere['title']}",
+          "${widget.evaluationTitre} de ${widget.matiere['title']}(${widget.trimestres})",
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
