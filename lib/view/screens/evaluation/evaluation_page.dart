@@ -129,7 +129,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
             title: "Partie I : Vérification des connaissances",
             points: 20,
             content:
-                EvaluationContents.getKnowledgeRetrievalContent(widget.matiere),
+                EvaluationContents.getKnowledgeRetrievalContent(widget.matiere, widget.evaluationTitre, widget.trimestres),
           ),
           SizedBox(height: 20),
 
