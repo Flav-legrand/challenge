@@ -1,14 +1,13 @@
+import 'package:challenger/view/screens/evaluation/evaluation_page.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'evaluation_contents.dart'; // Importer correctement les contenus d’évaluation
+import 'package:challenger/database/database.dart';
+import 'evaluation_contents.dart';
 
 class EvaluationPage extends StatefulWidget {
   final Map<String, dynamic> matiere;
 
-  const EvaluationPage({
-    super.key,
-    required this.matiere,
-  });
+  const EvaluationPage({Key? key, required this.matiere}) : super(key: key);
 
   @override
   _EvaluationPageState createState() => _EvaluationPageState();
@@ -17,29 +16,18 @@ class EvaluationPage extends StatefulWidget {
 class _EvaluationPageState extends State<EvaluationPage> {
   late String _timeString;
   late Timer _timer;
-  int _startTime = 0;
-
-  bool _isConfirmed = false; // État de la puce de confirmation
+  int _elapsedSeconds = 0;
+  bool _isConfirmed = false;
+  Map<int, String> _userAnswers = {};
 
   @override
   void initState() {
     super.initState();
-    _timeString = _formatTime(_startTime);
-    _startTimer();
-  }
-
-  String _formatTime(int seconds) {
-    int hours = seconds ~/ 3600;
-    int minutes = (seconds % 3600) ~/ 60;
-    int remainingSeconds = seconds % 60;
-    return '$hours:${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
-  }
-
-  void _startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timeString = _formatTime(_elapsedSeconds);
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {
-        _startTime++;
-        _timeString = _formatTime(_startTime);
+        _elapsedSeconds++;
+        _timeString = _formatTime(_elapsedSeconds);
       });
     });
   }
@@ -50,135 +38,157 @@ class _EvaluationPageState extends State<EvaluationPage> {
     super.dispose();
   }
 
-  Future<void> _showConfirmationDialog({
-    required String title,
-    required String content,
-    required VoidCallback onConfirm,
-  }) async {
-    return showDialog<void>(
+  String _formatTime(int seconds) {
+    final h = seconds ~/ 3600;
+    final m = (seconds % 3600) ~/ 60;
+    final s = seconds % 60;
+    return '$h:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}';
+  }
+
+  Future<void> _handleSubmit() async {
+    // 1) Confirm dialog
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(content),
-          actions: <Widget>[
-            TextButton(
-              child: Text("Annuler"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text("Confirmer"),
-              onPressed: () {
-                Navigator.of(context).pop();
-                onConfirm();
-              },
-            ),
-          ],
-        );
-      },
+      builder: (_) => AlertDialog(
+        title: const Text('Confirmer la soumission'),
+        content: const Text('Êtes-vous sûr de vouloir soumettre ce Test ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(context, true),  child: const Text('Confirmer')),
+        ],
+      ),
     );
+    if (confirmed != true) return;
+
+    // 2) Insert a new 'tests' record and get its ID
+    final matiereTitle = widget.matiere['title'] as String;
+    final matiereId    = await DatabaseHelper().getMatiereIdByTitle(matiereTitle);
+    if (matiereId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Matière \"$matiereTitle\" introuvable.")),
+      );
+      return;
+    }
+    final nowIso = DateTime.now().toIso8601String();
+    final testTitre = 'Test de $matiereTitle – $nowIso';
+    final testId = await DatabaseHelper().insertTest(
+      titre: testTitre,
+      dateIso: nowIso,
+      matiereId: matiereId,
+    );
+
+    // 3) Compute score: for each answered question, check correct option and sum points
+    int total = 0, maximum = 0;
+    final db = await DatabaseHelper.getDatabase();
+    for (final entry in _userAnswers.entries) {
+      final qid  = entry.key;
+      final resp = entry.value;
+      // fetch question points
+      final qRows = await db.query('test_questions',
+        columns: ['points'], where: 'id = ?', whereArgs: [qid], limit: 1);
+      final pts = qRows.isNotEmpty ? qRows.first['points'] as int : 0;
+      maximum += pts;
+      // fetch correct option
+      final oRows = await db.query('test_options',
+        where: 'question_id = ? AND is_correct = 1',
+        whereArgs: [qid], limit: 1);
+      final isCorrect = oRows.isNotEmpty && oRows.first['option_text'] == resp;
+      if (isCorrect) total += pts;
+      // record individual response
+      await db.insert('test_responses', {
+        'user_id'     : 1,            // adapt to real user id
+        'question_id' : qid,
+        'response'    : resp,
+        'is_correct'  : isCorrect ? 1 : 0,
+      });
+    }
+
+    // 4) Insert final score
+    await DatabaseHelper().insertScore(
+      score: total,
+      userId: 1,
+      date: nowIso,
+      maxScore: maximum,
+      testId: testId,
+    );
+
+    // 5) Feedback & navigate back
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Test soumis ! Votre score : $total / $maximum')),
+    );
+    Navigator.pop(context);
   }
 
-  void _handleSubmit() async {
-    await _showConfirmationDialog(
-      title: "Confirmer la soumission",
-      content: "Êtes-vous sûr de vouloir soumettre ce Test ?",
-      onConfirm: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Test soumis avec succès !")),
-        );
-        Navigator.pushReplacementNamed(context, '/matiere_list'); // Redirection
-      },
+  Future<void> _handleAbandon() async {
+    final abandon = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Confirmer l\'abandon'),
+        content: const Text('Voulez-vous vraiment abandonner ce test ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Non')),
+          TextButton(onPressed: () => Navigator.pop(context, true),  child: const Text('Oui')),
+        ],
+      ),
     );
+    if (abandon == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Test abandonné.')),
+      );
+      Navigator.pop(context);
+    }
   }
 
-  void _handleAbandon() async {
-    await _showConfirmationDialog(
-      title: "Confirmer l'abandon",
-      content: "Êtes-vous sûr de vouloir abandonner ce Test ?",
-      onConfirm: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Test abandonné.")),
-        );
-        Navigator.pushReplacementNamed(context, '/matiere_list'); // Redirection
-      },
-    );
+  // Called by your EvaluationContents widgets whenever a question is answered:
+  void _onAnswer(int questionId, String answer) {
+    setState(() {
+      _userAnswers[questionId] = answer;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Test de ${widget.matiere['title']}",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('Test de ${widget.matiere['title']}'),
         backgroundColor: Colors.blueAccent,
-        iconTheme: IconThemeData(color: Colors.white), // Bouton retour blanc
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Partie I : Vérification des connaissances
           EvaluationSection(
-            title: "Partie I : Vérification des connaissances",
+            title: 'Partie I : Vérification des connaissances',
             points: 20,
-            content:
-                EvaluationContents.getKnowledgeRetrievalContent(widget.matiere),
+            content: EvaluationContents.getKnowledgeRetrievalContent(
+              widget.matiere,
+            ),
           ),
-          SizedBox(height: 20),
-          // Texte avec la puce de confirmation
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 20),
+          Row(
             children: [
-              Row(
-                children: [
-                  Checkbox(
-                    value: _isConfirmed,
-                    onChanged: (value) {
-                      setState(() {
-                        _isConfirmed = value ?? false;
-                      });
-                    },
-                  ),
-                  Expanded(
-                    child: Text(
-                      "En soumettant ce Test, j’accepte d’avoir lu, compris et approuvé les conditions d’utilisation d’Horizon Challenger. "
-                      "Je suis pleinement conscient des conséquences en cas de non-respect de ces conditions.",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
+              Checkbox(
+                value: _isConfirmed,
+                onChanged: (v) => setState(() => _isConfirmed = v!),
               ),
-              SizedBox(height: 20),
-
-              // Boutons "Soumettre" et "Abandonner"
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: _isConfirmed ? _handleSubmit : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      disabledBackgroundColor: Colors.grey,
-                      foregroundColor:
-                          _isConfirmed ? Colors.white : Colors.black,
-                    ),
-                    child: Text("Soumettre"),
-                  ),
-                  OutlinedButton(
-                    onPressed: _handleAbandon,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.blueAccent),
-                    ),
-                    child: Text(
-                      "Abandonner",
-                      style: TextStyle(color: Colors.blueAccent),
-                    ),
-                  ),
-                ],
+              const Expanded(
+                child: Text(
+                  'En soumettant ce Test, j’accepte les conditions.',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: _isConfirmed ? _handleSubmit : null,
+                child: const Text('Soumettre'),
+              ),
+              OutlinedButton(
+                onPressed: _handleAbandon,
+                child: const Text('Abandonner'),
               ),
             ],
           ),
@@ -191,86 +201,16 @@ class _EvaluationPageState extends State<EvaluationPage> {
           decoration: BoxDecoration(
             color: Colors.blueAccent,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
+            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.access_time,
-                color: Colors.white,
-                size: 24,
-              ),
-              SizedBox(width: 10),
-              Text(
-                _timeString,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+              const Icon(Icons.access_time, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(_timeString, style: const TextStyle(color: Colors.white, fontSize: 18)),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class EvaluationSection extends StatelessWidget {
-  final String title;
-  final int points;
-  final Widget content;
-
-  const EvaluationSection({
-    required this.title,
-    required this.points,
-    required this.content,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title and points display
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors
-                          .blueAccent, // Modification de la couleur en bleu
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                SizedBox(width: 10),
-                Text(
-                  "$points pts",
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-            Divider(color: Colors.grey[300], thickness: 1),
-            content, // Le contenu qui vient de EvaluationContents
-          ],
         ),
       ),
     );
