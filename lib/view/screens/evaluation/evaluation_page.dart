@@ -133,7 +133,8 @@ class _EvaluationPageState extends State<EvaluationPage> {
           ),
           SizedBox(height: 20),
 
-          // Partie II : Application des connaissances
+          // Partie II : Application des connais
+          // sances
           EvaluationSection(
             title: "Partie II : Application des connaissances",
             points: 30,
@@ -283,6 +284,7 @@ class EvaluationSection extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 10),
+                
                 Text(
                   "$points pts",
                   style: TextStyle(fontSize: 14, color: Colors.grey[600]),
