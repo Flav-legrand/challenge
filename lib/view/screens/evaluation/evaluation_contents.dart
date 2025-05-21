@@ -55,27 +55,28 @@ class _KnowledgeVerificationContentState
     final db = await DatabaseHelper.getDatabase();
     final List<Map<String, dynamic>> result = await db.rawQuery(
       '''
-      SELECT 
-        m.title AS Matiere,
-        d.titre AS Devoir,
-        d.trimestre AS Trimestre,
-        q.id AS QuestionId,
-        q.question AS Question,
-        o.option_text AS OptionText,
-        o.is_correct AS IsCorrect
-      FROM 
-        matieres m
-      INNER JOIN 
-        devoirs d ON m.id = d.matiere_id
-      INNER JOIN 
-        questions q ON d.id = q.devoir_id
-      INNER JOIN 
-        options o ON q.id = o.question_id
-      WHERE 
-       m.title = ?
-        AND d.titre = ?
-        AND d.trimestre = ?;
-      ''',
+  SELECT 
+    m.title AS Matiere,
+    d.titre AS Devoir,
+    d.trimestre AS Trimestre,
+    q.id AS QuestionId,
+    q.question AS Question,
+    q.points AS Points, -- 👈 AJOUT ICI
+    o.option_text AS OptionText,
+    o.is_correct AS IsCorrect
+  FROM 
+    matieres m
+  INNER JOIN 
+    devoirs d ON m.id = d.matiere_id
+  INNER JOIN 
+    questions q ON d.id = q.devoir_id
+  INNER JOIN 
+    options o ON q.id = o.question_id
+  WHERE 
+   m.title = ?
+    AND d.titre = ?
+    AND d.trimestre = ?;
+  ''',
       [widget.matiereNom, widget.evaluationTitre, widget.trimestres],
     );
 
@@ -91,6 +92,7 @@ class _KnowledgeVerificationContentState
           'devoir': row['Devoir'],
           'trimestre': row['Trimestre'],
           'question': row['Question'],
+          'points': row['Points'],
           'options': [],
         };
       }
@@ -119,6 +121,7 @@ class _KnowledgeVerificationContentState
             return const Center(child: Text('Aucune question disponible.'));
           } else {
             final questions = snapshot.data!;
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -133,6 +136,7 @@ class _KnowledgeVerificationContentState
                   return QuestionWithOptions(
                     question: question,
                     index: index,
+                    points: (question['points'] as num).toDouble(),
                   );
                 }),
               ],
@@ -147,11 +151,13 @@ class _KnowledgeVerificationContentState
 class QuestionWithOptions extends StatefulWidget {
   final Map<String, dynamic> question;
   final int index;
+  final double points;
 
   const QuestionWithOptions({
     super.key,
     required this.question,
     required this.index,
+    required this.points,
   });
 
   @override
@@ -169,7 +175,7 @@ class _QuestionWithOptionsState extends State<QuestionWithOptions> {
       children: [
         const SizedBox(height: 10),
         Text(
-          "${widget.index}. ${question["question"]}",
+          "${widget.index}. ${question["question"]}  (${widget.points} pts)",
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 5),
