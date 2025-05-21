@@ -89,6 +89,7 @@ class _KnowledgeVerificationContentState
           'matiere': row['Matiere'],
           'test': row['Test'],
           'question': row['Question'],
+          'points': row['Points'],
           'options': [],
         };
       }
@@ -121,7 +122,7 @@ class _KnowledgeVerificationContentState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Dans cet exercice, pour la matière ${widget.matiereNom}, évaluation '${widget.evaluationTitre}' - Trimestre ${widget.trimestres}, lisez les questions et trouvez la bonne réponse.",
+                  "Dans ce test de ${widget.matiereNom} lisez les questions et trouvez la bonne réponse.",
                   style: const TextStyle(
                       fontSize: 16, fontStyle: FontStyle.italic),
                 ),
