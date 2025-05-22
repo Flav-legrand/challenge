@@ -22,7 +22,8 @@ class DatabaseHelper {
 
   /// Création des tables à la première ouverture.
   static Future<Database> _initDatabase() async {
-    final path = join(await databaseFactory.getDatabasesPath(), 'my_database.db');
+    final path =
+        join(await databaseFactory.getDatabasesPath(), 'my_database.db');
     return await openDatabase(
       path,
       version: 1,
@@ -78,7 +79,7 @@ class DatabaseHelper {
         ''');
 
         await db.execute('''
-          CREATE TABLE test_scores (
+          CREATE TABLE test_results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             test_id INTEGER NOT NULL,
@@ -129,18 +130,23 @@ class DatabaseHelper {
     required int score,
     required int userId,
     required String date,
-    required int maxScore,
     required int testId,
+    required int maxScore,
+    required String testTitre,
+    required dynamic widget,
   }) async {
     final db = await getDatabase();
     await db.insert(
-      'test_scores',
+      'test_results',
       {
         'user_id': userId,
-        'test_id': testId,
         'score': score,
         'max_score': maxScore,
-        'date': date,
+        'titre': testTitre,
+        'description': 'titre',
+        'matiere_id': testId,
+        'date_creation': 'titre',
+        'date_passed': 'titre',
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -178,8 +184,8 @@ class DatabaseHelper {
       final pts = q.isNotEmpty ? q.first['points'] as int : 0;
       maxScore += pts;
 
-      final isCorrect = correct.isNotEmpty &&
-          (correct.first['option_text'] == resp);
+      final isCorrect =
+          correct.isNotEmpty && (correct.first['option_text'] == resp);
       if (isCorrect) totalScore += pts;
 
       // Enregistre la réponse
@@ -198,8 +204,11 @@ class DatabaseHelper {
       date: DateTime.now().toIso8601String(),
       maxScore: maxScore,
       testId: testId,
+      widget: null,
+      testTitre: '',
     );
   }
+
   Future<List<Map<String, dynamic>>> getMatieres() async {
     final db = await getDatabase();
     return await db.query('matieres'); // Récupère toutes les matières
