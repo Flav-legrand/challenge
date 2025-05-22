@@ -128,8 +128,8 @@ class _EvaluationPageState extends State<EvaluationPage> {
           EvaluationSection(
             title: "Partie I : Vérification des connaissances",
             points: 20,
-            content:
-                EvaluationContents.getKnowledgeRetrievalContent(widget.matiere, widget.evaluationTitre, widget.trimestres),
+            content: EvaluationContents.getKnowledgeRetrievalContent(
+                widget.matiere, widget.evaluationTitre, widget.trimestres),
           ),
           SizedBox(height: 20),
 
@@ -284,7 +284,6 @@ class EvaluationSection extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 10),
-                
                 Text(
                   "$points pts",
                   style: TextStyle(fontSize: 14, color: Colors.grey[600]),
