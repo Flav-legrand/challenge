@@ -24,15 +24,15 @@ class _HistoriqueTestState extends State<HistoriqueTest> {
       SELECT
         ts.score,
         ts.max_score,
-        ts.date,
+        
         t.titre        AS test_titre,
         m.title        AS matiere_titre,
         m.icon         AS matiere_icon,
         m.color        AS matiere_color
-      FROM test_scores ts
-      JOIN tests t ON ts.test_id = t.id
+      FROM test_results ts
+      JOIN test_results t ON ts.id = t.id
       JOIN matieres m ON t.matiere_id = m.id
-      ORDER BY ts.date DESC
+      ORDER BY t.titre DESC
     ''');
     setState(() => _history = rows);
   }

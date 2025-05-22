@@ -42,80 +42,157 @@ class _EvaluationPageState extends State<EvaluationPage> {
     final h = seconds ~/ 3600;
     final m = (seconds % 3600) ~/ 60;
     final s = seconds % 60;
-    return '$h:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}';
+    return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   Future<void> _handleSubmit() async {
-    // 1) Confirm dialog
+    print('=== DEBUT SOUMISSION ===');
+    print('Nombre de réponses: ${_userAnswers.length}');
+    print('Contenu des réponses:');
+    _userAnswers.forEach((key, value) {
+      print('Q$key: $value');
+    });
+
+    if (_userAnswers.isEmpty) {
+      print('⚠️ Aucune réponse enregistrée!');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucune réponse à évaluer!')),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Confirmer la soumission'),
         content: const Text('Êtes-vous sûr de vouloir soumettre ce Test ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(context, true),  child: const Text('Confirmer')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirmer'),
+          ),
         ],
       ),
     );
     if (confirmed != true) return;
+    print('=== DEBUT SOUMISSION ===');
+    print('Nombre de réponses: ${_userAnswers.length}');
+    print('Contenu des réponses:');
+    _userAnswers.forEach((key, value) {
+      print('Q$key: $value');
+    });
 
-    // 2) Insert a new 'tests' record and get its ID
-    final matiereTitle = widget.matiere['title'] as String;
-    final matiereId    = await DatabaseHelper().getMatiereIdByTitle(matiereTitle);
-    if (matiereId == null) {
+    if (_userAnswers.isEmpty) {
+      print('⚠️ Aucune réponse enregistrée!');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Matière \"$matiereTitle\" introuvable.")),
+        const SnackBar(content: Text('Aucune réponse à évaluer!')),
       );
       return;
     }
-    final nowIso = DateTime.now().toIso8601String();
-    final testTitre = 'Test de $matiereTitle – $nowIso';
-    final testId = await DatabaseHelper().insertTest(
-      titre: testTitre,
-      dateIso: nowIso,
-      matiereId: matiereId,
-    );
 
-    // 3) Compute score: for each answered question, check correct option and sum points
-    int total = 0, maximum = 0;
+    double total = 0.0; // Initialisation du total des points
+    double maximum = 0.0; // Initialisation du maximum possible
+
     final db = await DatabaseHelper.getDatabase();
+
+    print('🟢 Réponses à évaluer: $_userAnswers'); // Vérifiez le contenu
     for (final entry in _userAnswers.entries) {
-      final qid  = entry.key;
+      final qid = entry.key;
       final resp = entry.value;
-      // fetch question points
-      final qRows = await db.query('test_questions',
-        columns: ['points'], where: 'id = ?', whereArgs: [qid], limit: 1);
-      final pts = qRows.isNotEmpty ? qRows.first['points'] as int : 0;
-      maximum += pts;
-      // fetch correct option
-      final oRows = await db.query('test_options',
+      print('🔵 Traitement Q$qid - Réponse: $resp');
+
+      // Récupérer les points associés à la question
+      final qRows = await db.query(
+        'test_questions',
+        columns: ['points'],
+        where: 'id = ?',
+        whereArgs: [qid],
+        limit: 1,
+      );
+
+      if (qRows.isEmpty) {
+        print('❌ Question non trouvée pour id: $qid');
+        continue; // Si la question n'est pas trouvée, on passe à la suivante
+      }
+
+      final pts = qRows.first['points'] ?? 0;
+      print(
+          '✔️ Question ID: $qid, Points: $pts'); // Affiche les points de chaque question
+
+      maximum += (pts as int);
+
+      // Vérification de la réponse correcte
+      final oRows = await db.query(
+        'test_options',
         where: 'question_id = ? AND is_correct = 1',
-        whereArgs: [qid], limit: 1);
-      final isCorrect = oRows.isNotEmpty && oRows.first['option_text'] == resp;
-      if (isCorrect) total += pts;
-      // record individual response
+        whereArgs: [qid],
+        limit: 1,
+      );
+
+      bool isCorrect = false;
+
+      if (oRows.isNotEmpty) {
+        final correctOptionText =
+            oRows.first['option_text'].toString().trim().toLowerCase();
+        final userResponse = resp.toString().trim().toLowerCase();
+        isCorrect = correctOptionText == userResponse;
+        print('Points pour Q$qid: $pts (type: ${pts.runtimeType})');
+        print('Option correcte: ${oRows.first['option_text']}');
+        print('Réponse utilisateur: $resp');
+        print('Correspondance: ${correctOptionText == userResponse}');
+        print(
+            '✔️ Réponse correcte : $correctOptionText, Réponse utilisateur : $userResponse'); // Debug des réponses
+      } else {
+        print('❌ Aucune option correcte trouvée pour la question ID: $qid');
+      }
+
+      if (isCorrect) {
+        total += (pts as int);
+      }
+
+      // Enregistrer la réponse dans la table test_responses
       await db.insert('test_responses', {
-        'user_id'     : 1,            // adapt to real user id
-        'question_id' : qid,
-        'response'    : resp,
-        'is_correct'  : isCorrect ? 1 : 0,
+        'user_id': 1, // Remplacer par l'ID de l'utilisateur authentifié
+        'question_id': qid,
+        'response': resp,
+        'is_correct': isCorrect ? 1 : 0,
       });
     }
 
-    // 4) Insert final score
-    await DatabaseHelper().insertScore(
-      score: total,
-      userId: 1,
-      date: nowIso,
-      maxScore: maximum,
-      testId: testId,
+    // Enregistrer le résultat du test
+    final nowIso = DateTime.now().toIso8601String();
+    final testId = widget.matiere['id'] ?? 0;
+    String testTitre = widget.matiere['title'];
+
+    await db.insert('test_results', {
+      'user_id': 1, // Remplacer par l'ID de l'utilisateur authentifié
+      'matiere_id': testId,
+      'score': total,
+      'max_score': maximum,
+      'date_creation': nowIso,
+      'titre': 'Test de $testTitre',
+    });
+
+    final formattedAnswers =
+        _userAnswers.entries.map((e) => 'Q${e.key}: ${e.value}').join(', ');
+
+    print('🟡 Réponses utilisateur (_userAnswers): $_userAnswers');
+    print('🟡 Score total: $total, Score maximum: $maximum');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Test soumis ! Score : $total / $maximum\nRéponses : $formattedAnswers',
+          style: const TextStyle(fontSize: 14),
+        ),
+        duration: const Duration(seconds: 6),
+      ),
     );
 
-    // 5) Feedback & navigate back
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Test soumis ! Votre score : $total / $maximum')),
-    );
     Navigator.pop(context);
   }
 
@@ -126,8 +203,12 @@ class _EvaluationPageState extends State<EvaluationPage> {
         title: const Text('Confirmer l\'abandon'),
         content: const Text('Voulez-vous vraiment abandonner ce test ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Non')),
-          TextButton(onPressed: () => Navigator.pop(context, true),  child: const Text('Oui')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Non')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Oui')),
         ],
       ),
     );
@@ -139,10 +220,10 @@ class _EvaluationPageState extends State<EvaluationPage> {
     }
   }
 
-  // Called by your EvaluationContents widgets whenever a question is answered:
   void _onAnswer(int questionId, String answer) {
     setState(() {
       _userAnswers[questionId] = answer;
+      print('Réponse enregistrée pour Q$questionId: $answer'); // Debug
     });
   }
 
@@ -161,6 +242,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
             points: 20,
             content: EvaluationContents.getKnowledgeRetrievalContent(
               widget.matiere,
+              onAnswered: _onAnswer,
             ),
           ),
           const SizedBox(height: 20),
@@ -208,7 +290,8 @@ class _EvaluationPageState extends State<EvaluationPage> {
             children: [
               const Icon(Icons.access_time, color: Colors.white),
               const SizedBox(width: 8),
-              Text(_timeString, style: const TextStyle(color: Colors.white, fontSize: 18)),
+              Text(_timeString,
+                  style: const TextStyle(color: Colors.white, fontSize: 18)),
             ],
           ),
         ),
