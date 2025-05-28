@@ -14,11 +14,11 @@ class EvaluationContents {
   }
 
   static Widget getKnowledgeApplicationContent(Map<String, dynamic> matiere) {
-    return KnowledgeApplicationContent();
+    return KnowledgeApplicationContent(matiere: {}, matiereNoms: matiere['nom'], matiereNom: matiere['nom'],);
   }
 
   static Widget getPracticalCaseContent(Map<String, dynamic> matiere) {
-    return PracticalCaseContent();
+    return PracticalCaseContent(matiere: {}, matiereNom: matiere['nom']);
   }
 }
 
