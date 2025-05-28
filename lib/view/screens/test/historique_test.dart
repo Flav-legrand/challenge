@@ -32,7 +32,7 @@ class _HistoriqueTestState extends State<HistoriqueTest> {
       FROM test_results ts
       JOIN test_results t ON ts.id = t.id
       JOIN matieres m ON t.matiere_id = m.id
-      ORDER BY t.titre DESC
+      ORDER BY ts.date_creation DESC
     ''');
     setState(() => _history = rows);
   }

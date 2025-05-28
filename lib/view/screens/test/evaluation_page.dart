@@ -151,7 +151,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
       }
 
       if (isCorrect) {
-        total += (pts as int);
+        total += pts;
       }
 
       // Enregistrer la réponse dans la table test_responses
