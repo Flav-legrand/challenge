@@ -1,15 +1,105 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:challenger/view/screens/test.dart';
 import 'package:challenger/view/screens/competition.dart';
 import 'package:challenger/view/screens/evaluation.dart';
 import 'test/matiere_stat.dart';
+import 'login_screen.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:challenger/database/database.dart'; //
 
-class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+class HomePage extends StatefulWidget {
+  final int userId;
+  const HomePage({Key? key, required this.userId}) : super(key: key);
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String? userName;
+  String? userEmail;
+  String? niveau;
+  String? serie;
+  String? domicile;
+  Uint8List? profileImage;
+
+  int _chartKey = 0;
+
+  Future<Map<String, int>> getTestSuccessStats(int userId) async {
+    final db = await DatabaseHelper.getDatabase();
+    // On considère la moyenne à 50% du max_score
+    final results = await db.query(
+      'test_results',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+
+    int success = 0;
+    int fail = 0;
+    for (final row in results) {
+      final score = row['score'] as int;
+      final maxScore = row['max_score'] as int;
+      if (maxScore == 0) continue;
+      if (score >= (maxScore / 2)) {
+        success++;
+      } else {
+        fail++;
+      }
+    }
+    return {'success': success, 'fail': fail};
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    setState(() {
+      _chartKey++;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    setState(() {
+      _chartKey++;
+    });
+  }
+
+  Future<void> _loadUserInfo() async {
+    final db = await DatabaseHelper.getDatabase();
+    final result = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [widget.userId],
+      limit: 1,
+    );
+    if (result.isNotEmpty) {
+      final user = result.first;
+      setState(() {
+        userName = user['username'] as String?;
+        userEmail = user['email'] as String?;
+        niveau = user['niveau '] as String? ?? user['niveau'] as String?;
+        serie = user['serie '] as String? ?? user['serie'] as String?;
+        domicile = user['domicile '] as String? ?? user['domicile'] as String?;
+        profileImage = user['Field5'] as Uint8List?;
+      });
+    }
+  }
 
   final List<Map<String, dynamic>> subjects = const [
     {'title': 'Math', 'icon': Icons.calculate, 'color': Colors.blue},
-    {'title': 'Physique & Chimie', 'icon': Icons.science, 'color': Colors.deepPurple},
+    {
+      'title': 'Physique & Chimie',
+      'icon': Icons.science,
+      'color': Colors.deepPurple
+    },
     {'title': 'SVT', 'icon': Icons.grass, 'color': Colors.green},
     {'title': 'Histoire & Geo', 'icon': Icons.public, 'color': Colors.orange},
     {'title': 'Philosophie', 'icon': Icons.psychology, 'color': Colors.teal},
@@ -17,7 +107,11 @@ class HomePage extends StatelessWidget {
     {'title': 'Anglais', 'icon': Icons.language, 'color': Colors.indigo},
     {'title': 'Informatique', 'icon': Icons.computer, 'color': Colors.cyan},
     {'title': 'Education Physique', 'icon': Icons.sports, 'color': Colors.pink},
-    {'title': 'Culture Générale', 'icon': Icons.lightbulb, 'color': Colors.amber},
+    {
+      'title': 'Culture Générale',
+      'icon': Icons.lightbulb,
+      'color': Colors.amber
+    },
   ];
 
   @override
@@ -125,8 +219,14 @@ class HomePage extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => TestPage()),
-                      );
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                TestPage(userId: widget.userId)),
+                      ).then((_) {
+                        setState(() {
+                          _chartKey++;
+                        });
+                      });
                     },
                   ),
                   _buildModuleCard(
@@ -136,7 +236,10 @@ class HomePage extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CompetitionPage()),
+                        MaterialPageRoute(
+                            builder: (context) => CompetitionPage(
+                                  userId: widget.userId,
+                                )),
                       );
                     },
                   ),
@@ -147,8 +250,14 @@ class HomePage extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => EvaluationPage()),
-                      );
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                EvaluationPage(userId: widget.userId)),
+                      ).then((_) {
+                        setState(() {
+                          _chartKey++;
+                        });
+                      });
                     },
                   ),
                 ],
@@ -158,16 +267,55 @@ class HomePage extends StatelessWidget {
             _buildSection(
               title: 'Courbe d’évolution',
               child: Container(
-                height: 150,
+                height: 180,
                 decoration: BoxDecoration(
                   color: Colors.blue[50],
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Center(
-                  child: Text(
-                    '[Graphique à intégrer ici]',
-                    style: TextStyle(fontSize: 16, color: Colors.blueAccent),
-                  ),
+                child: FutureBuilder<Map<String, int>>(
+                  key: ValueKey(_chartKey), // Ajoute la clé ici
+                  future: getTestSuccessStats(widget.userId),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const CircularProgressIndicator();
+                    }
+                    final data = snapshot.data!;
+                    final success = data['success']!;
+                    final fail = data['fail']!;
+                    if (success + fail == 0) {
+                      return const Text('Aucun test passé');
+                    }
+                    return PieChart(
+                      PieChartData(
+                        sectionsSpace: 4,
+                        centerSpaceRadius: 40,
+                        sections: [
+                          PieChartSectionData(
+                            color: const Color.fromARGB(255, 134, 182, 221),
+                            value: success.toDouble(),
+                            title: 'Réussis\n$success',
+                            radius: 50,
+                            titleStyle: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          PieChartSectionData(
+                            color: Colors.red,
+                            value: fail.toDouble(),
+                            title: 'Échoués\n$fail',
+                            radius: 50,
+                            titleStyle: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -177,9 +325,12 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildProgressBarSection('Trimestre 1', 0.8, Colors.greenAccent),
-                  _buildProgressBarSection('Trimestre 2', 0.5, Colors.orangeAccent),
-                  _buildProgressBarSection('Trimestre 3', 0.2, Colors.redAccent),
+                  _buildProgressBarSection(
+                      'Trimestre 1', 0.8, Colors.greenAccent),
+                  _buildProgressBarSection(
+                      'Trimestre 2', 0.5, Colors.orangeAccent),
+                  _buildProgressBarSection(
+                      'Trimestre 3', 0.2, Colors.redAccent),
                 ],
               ),
             ),
@@ -216,7 +367,6 @@ class HomePage extends StatelessWidget {
                 );
               },
             ),
-
           ],
         ),
       ),
@@ -336,7 +486,10 @@ class HomePage extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+          style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800]),
         ),
         const SizedBox(height: 5),
         LinearProgressIndicator(
@@ -412,14 +565,57 @@ class HomePage extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.blue[100],
-              child: Icon(Icons.person, size: 50, color: Colors.blue),
+            GestureDetector(
+              onTap: () {
+                if (profileImage != null && profileImage!.isNotEmpty) {
+                  showDialog(
+                    context: context,
+                    builder: (_) => Dialog(
+                      backgroundColor: Colors.transparent,
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () => Navigator.of(context)
+                              .pop(), // Ferme la boîte au clic
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              maxWidth: 300,
+                              maxHeight: 300,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Colors.white,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: InteractiveViewer(
+                                child: Image.memory(
+                                  profileImage!,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.blue[100],
+                backgroundImage:
+                    (profileImage != null && profileImage!.isNotEmpty)
+                        ? MemoryImage(profileImage!)
+                        : null,
+                child: (profileImage == null || profileImage!.isEmpty)
+                    ? Icon(Icons.person, size: 50, color: Colors.blue)
+                    : null,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
-              'DZIO Ruth Dorcas',
+              userName ?? 'Utilisateur',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -428,10 +624,32 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Divider(color: Colors.blue[100]),
-            _buildProfileRow(Icons.school, 'Niveau', 'Terminal'),
-            _buildProfileRow(Icons.class_, 'Série', 'C'),
-            _buildProfileRow(Icons.email, 'Email', 'ruthdorcasdzio@gmail.com'),
-            _buildProfileRow(Icons.home, 'Domicile', 'Brazzaville'),
+            _buildProfileRow(Icons.school, 'Niveau', niveau ?? ''),
+            _buildProfileRow(Icons.class_, 'Série', serie ?? ''),
+            _buildProfileRow(Icons.home, 'Domicile', domicile ?? ''),
+            _buildProfileRow(Icons.email, 'Email', userEmail ?? ''),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.logout, color: Colors.white),
+              label: const Text(
+                'Déconnexion',
+                style: TextStyle(color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -463,5 +681,4 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
-
 }

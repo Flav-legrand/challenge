@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CompetitionPage extends StatelessWidget {
-  const CompetitionPage({Key? key}) : super(key: key);
+  const CompetitionPage({Key? key, required int userId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

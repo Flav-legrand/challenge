@@ -12,7 +12,8 @@ import 'test/challenge_list.dart';
 import 'test/mes_communautes.dart';
 
 class TestPage extends StatefulWidget {
-  const TestPage({Key? key}) : super(key: key);
+  final int userId;
+  const TestPage({Key? key, required this.userId}) : super(key: key);
 
   @override
   _TestPageState createState() => _TestPageState();
@@ -116,7 +117,7 @@ class _TestPageState extends State<TestPage> {
                 label: 'Créer un nouveau test',
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MatiereList()),
+                  MaterialPageRoute(builder: (context) => MatiereList(userId: widget.userId)),
                 ),
               ),
               _buildCenteredActionButton(
@@ -124,7 +125,7 @@ class _TestPageState extends State<TestPage> {
                 label: 'Mes tests',
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HistoriqueTest()),
+                  MaterialPageRoute(builder: (context) => HistoriqueTest(userId: widget.userId)),
                 ),
               ),
               _buildCenteredActionButton(
@@ -217,7 +218,7 @@ class _TestPageState extends State<TestPage> {
                   label: 'Nouveau',
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const NouveauChallengePage()),
+                    MaterialPageRoute(builder: (context) => NouveauChallengePage(userId: widget.userId)),
                   ),
                 );
               case 1:

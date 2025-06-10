@@ -15,7 +15,7 @@ class Devoir {
 }
 
 class EvaluationPage extends StatefulWidget {
-  const EvaluationPage({super.key});
+  const EvaluationPage({super.key, required int userId});
 
   @override
   _EvaluationPageState createState() => _EvaluationPageState();

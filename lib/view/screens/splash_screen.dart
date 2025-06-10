@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'root_app.dart'; // Assurez-vous que le chemin est correct.
+import 'login_screen.dart'; // <-- décommente ou ajoute cette ligne
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -21,18 +21,19 @@ class _SplashScreenState extends State<SplashScreen>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    )..forward();
+    );
+    _controller.forward(); // <-- Ajoute ceci
 
     _animation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeInOut,
     );
 
-    // Redirection vers la page principale après 3 secondes
+    // Redirection vers la page de connexion après 3 secondes
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const RootApp()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()), // <-- ici
       );
     });
   }

@@ -6,7 +6,8 @@ import 'package:challenger/view/screens/competition.dart'; // Page de compétiti
 import 'package:challenger/view/theme/color.dart';
 
 class RootApp extends StatefulWidget {
-  const RootApp({Key? key}) : super(key: key);
+  final int userId;
+  const RootApp({Key? key, required this.userId}) : super(key: key);
 
   @override
   _RootAppState createState() => _RootAppState();
@@ -15,32 +16,8 @@ class RootApp extends StatefulWidget {
 class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
   int _activeTab = 0;
 
-  final List<Map<String, dynamic>> _barItems = [
-    {
-      "icon": Icons.home_outlined,
-      "active_icon": Icons.home,
-      "page": HomePage(),
-      "label": "Accueil",
-    },
-    {
-      "icon": Icons.assignment_outlined,
-      "active_icon": Icons.assignment,
-      "page": TestPage(),
-      "label": "Test",
-    },
-    {
-      "icon": Icons.school_outlined,
-      "active_icon": Icons.school,
-      "page": EvaluationPage(),
-      "label": "Évaluation",
-    },
-    {
-      "icon": Icons.emoji_events_outlined,
-      "active_icon": Icons.emoji_events,
-      "page": CompetitionPage(),
-      "label": "Compétition",
-    },
-  ];
+  // The _barItems list will be initialized in initState() where widget.userId is accessible.
+  late final List<Map<String, dynamic>> _barItems;
 
   late final AnimationController _controller = AnimationController(
     duration: const Duration(milliseconds: 500),
@@ -54,6 +31,32 @@ class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _barItems = [
+      {
+        "icon": Icons.home_outlined,
+        "active_icon": Icons.home,
+        "page": HomePage(userId: widget.userId),
+        "label": "Accueil",
+      },
+      {
+        "icon": Icons.assignment_outlined,
+        "active_icon": Icons.assignment,
+        "page": TestPage(userId: widget.userId),
+        "label": "Test",
+      },
+      {
+        "icon": Icons.school_outlined,
+        "active_icon": Icons.school,
+        "page": EvaluationPage(userId: widget.userId),
+        "label": "Évaluation",
+      },
+      {
+        "icon": Icons.emoji_events_outlined,
+        "active_icon": Icons.emoji_events,
+        "page": CompetitionPage(userId: widget.userId),
+        "label": "Compétition",
+      },
+    ];
     _controller.forward();
   }
 
@@ -77,10 +80,7 @@ class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
       index: _activeTab,
       children: List.generate(
         _barItems.length,
-            (index) => FadeTransition(
-          opacity: _animation,
-          child: _barItems[index]["page"],
-        ),
+        (index) => _barItems[index]["page"],
       ),
     );
   }
