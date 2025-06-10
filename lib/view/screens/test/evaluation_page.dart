@@ -6,8 +6,9 @@ import 'evaluation_contents.dart';
 
 class EvaluationPage extends StatefulWidget {
   final Map<String, dynamic> matiere;
+  final int userId;
 
-  const EvaluationPage({Key? key, required this.matiere}) : super(key: key);
+  const EvaluationPage({Key? key, required this.matiere, required this.userId}) : super(key: key);
 
   @override
   _EvaluationPageState createState() => _EvaluationPageState();
@@ -156,7 +157,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
 
       // Enregistrer la réponse dans la table test_responses
       await db.insert('test_responses', {
-        'user_id': 1, // Remplacer par l'ID de l'utilisateur authentifié
+        'user_id': widget.userId, // Remplacer par l'ID de l'utilisateur authentifié
         'question_id': qid,
         'response': resp,
         'is_correct': isCorrect ? 1 : 0,
@@ -169,7 +170,7 @@ class _EvaluationPageState extends State<EvaluationPage> {
     String testTitre = widget.matiere['title'];
 
     await db.insert('test_results', {
-      'user_id': 1, // Remplacer par l'ID de l'utilisateur authentifié
+      'user_id': widget.userId, // Remplacer par l'ID de l'utilisateur authentifié
       'matiere_id': testId,
       'score': total,
       'max_score': maximum,

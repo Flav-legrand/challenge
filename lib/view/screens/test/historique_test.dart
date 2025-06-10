@@ -3,7 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:challenger/database/database.dart';
 
 class HistoriqueTest extends StatefulWidget {
-  const HistoriqueTest({Key? key}) : super(key: key);
+  final int userId;
+  const HistoriqueTest({Key? key, required this.userId}) : super(key: key);
 
   @override
   _HistoriqueTestState createState() => _HistoriqueTestState();
@@ -24,16 +25,17 @@ class _HistoriqueTestState extends State<HistoriqueTest> {
       SELECT
         ts.score,
         ts.max_score,
-        
         t.titre        AS test_titre,
         m.title        AS matiere_titre,
         m.icon         AS matiere_icon,
-        m.color        AS matiere_color
+        m.color        AS matiere_color,
+        ts.date_creation AS date
       FROM test_results ts
       JOIN test_results t ON ts.id = t.id
       JOIN matieres m ON t.matiere_id = m.id
+      WHERE ts.user_id = ?
       ORDER BY ts.date_creation DESC
-    ''');
+    ''', [widget.userId]);
     setState(() => _history = rows);
   }
 

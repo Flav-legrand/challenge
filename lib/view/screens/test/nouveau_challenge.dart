@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'matiere_list_challenge.dart';
 
 class NouveauChallengePage extends StatelessWidget {
-  const NouveauChallengePage({Key? key}) : super(key: key);
+  final int userId;
+  const NouveauChallengePage({Key? key, required this.userId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -101,12 +102,12 @@ class NouveauChallengePage extends StatelessWidget {
         ),
         trailing: const Icon(Icons.arrow_forward, color: Colors.blueAccent),
         onTap: () {
-          // Naviguer vers la page `matiere_list_challenge.dart`
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => MatiereListChallengePage(
                 communityName: community['name'] ?? '',
+                userId: userId, // Passe le vrai userId ici
               ),
             ),
           );

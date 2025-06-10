@@ -3,8 +3,9 @@ import 'evaluation_page.dart'; // Importez la page EvaluationPage
 
 class MatiereListChallengePage extends StatelessWidget {
   final String communityName;
+  final int userId;
 
-  const MatiereListChallengePage({Key? key, required this.communityName})
+  const MatiereListChallengePage({Key? key, required this.communityName, required this.userId})
       : super(key: key);
 
   @override
@@ -168,7 +169,7 @@ class MatiereListChallengePage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              EvaluationPage(matiere: matiere),
+                              EvaluationPage(matiere: matiere, userId: userId),
                         ),
                       );
                     },

@@ -3,7 +3,8 @@ import 'package:challenger/database/database.dart';
 import 'evaluation_page.dart';
 
 class MatiereList extends StatefulWidget {
-  const MatiereList({Key? key}) : super(key: key);
+  final int userId;
+  const MatiereList({Key? key, required this.userId}) : super(key: key);
 
   @override
   _MatiereListState createState() => _MatiereListState();
@@ -164,7 +165,7 @@ class _MatiereListState extends State<MatiereList> {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  EvaluationPage(matiere: matiere),
+                                  EvaluationPage(matiere: matiere, userId: widget.userId),
                             ),
                           );
                         },
