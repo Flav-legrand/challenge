@@ -36,6 +36,7 @@ dependencies:
   badges: ^3.1.2
   carousel_slider: ^5.0.0
   synchronized: ^3.0.0
+  fl_chart: ^0.66.0
 
 
   # The following adds the Cupertino Icons font to your application.
