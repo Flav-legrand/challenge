@@ -212,4 +212,51 @@ class DatabaseHelper {
     final db = await getDatabase();
     return await db.query('matieres'); // Récupère toutes les matières
   }
+
+   Future<bool> checkUser(String email, String password) async {
+    final dbClient = await getDatabase();
+    final res = await dbClient.query(
+      'users',
+      where: 'email = ? AND password = ?',
+      whereArgs: [email, password],
+    );
+    return res.isNotEmpty;
+  }
+
+  Future<Map<String, dynamic>?> getUserByEmailAndPassword(String email, String password) async {
+    final dbClient = await getDatabase();
+    final res = await dbClient.query(
+      'users',
+      where: 'email = ? AND password = ?',
+      whereArgs: [email, password],
+    );
+    if (res.isNotEmpty) {
+      return res.first;
+    }
+    return null;
+  }
+
+  Future<Map<String, int>> getTestSuccessStats(int userId) async {
+    final db = await DatabaseHelper.getDatabase();
+    // On considère la moyenne à 50% du max_score
+    final results = await db.query(
+      'test_results',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+
+    int success = 0;
+    int fail = 0;
+    for (final row in results) {
+      final score = row['score'] as int;
+      final maxScore = row['max_score'] as int;
+      if (maxScore == 0) continue;
+      if (score >= (maxScore / 2)) {
+        success++;
+      } else {
+        fail++;
+      }
+    }
+    return {'success': success, 'fail': fail};
+  }
 }
